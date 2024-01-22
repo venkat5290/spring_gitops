@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gitops-spring
+  namespace: cd
   labels:
     app: gitops-spring
 spec:
@@ -27,6 +28,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: gitops-spring
+  namespace: cd
 spec:
   selector:
     app: gitops-spring

@@ -1,11 +1,13 @@
 pipeline{
     agent any
-    environment {
-            imageName = "venkat7010/springboot-devsecops"
-            dockerImage = ''
-            dockerImageTag = "${imageName}:${BUILD_NUMBER}"
-        }
     stages{
+        stage('Cleanup Workspace'){
+            steps {
+                script {
+                    cleanWs()
+                }
+            }
+        }
         stage('Checkout App'){
             steps{
                 echo "before checkin out"
@@ -13,12 +15,25 @@ pipeline{
                 echo "After checking out"
             }
         }
-        stage('Deploy to K8s') {
-            steps{
-                script {
-                    sh "kubectl --kubeconfig=~/.kube/config apply -f gitops_deployment.yml"
+       stage('setup kubeconfig') {
+          steps {
+            withCredentials([file(credentialsId: 'gkecluster', variable: 'cd_config')]) {
+                sh "sudo cp \${cd_config} ${WORKSPACE}/cd_config"
                 }
+           }
+       }
+        stage('deploy to gke cluster') {
+          steps {
+             sh '''
+                sudo kubectl --kubeconfig ${WORKSPACE}/cd_config config set-context --current --user=cd-sa
+                sudo kubectl apply -f gitops_deployment.yml --kubeconfig ${WORKSPACE}/cd_config 
+                '''
             }
-        } 
+        }
+        stage('remove kubeconfig file') {
+            steps {
+                sh "sudo rm -rf ${WORKSPACE}/cd_config"
+            }
+        }
     }
 }
