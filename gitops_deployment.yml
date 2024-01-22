@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitops_spring
+  labels:
+    app: gitops_spring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitops_spring
+  template:
+    metadata:
+      labels:
+        app: gitops_spring
+    spec:
+      containers:
+        - name: gitops_spring
+          image: venkat7010/springboot-devsecops:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8090
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitops_spring
+spec:
+  selector:
+    app: gitops_spring
+  ports:
+    - port: 80
+      targetPort: 8090
