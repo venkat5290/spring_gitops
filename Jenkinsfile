@@ -1,5 +1,14 @@
 pipeline{
     agent any
+     environment {
+        APP_NAME = "springboot-devsecops"
+        IMAGE_TAG = ${params.IMAGE_TAG}
+    }
+    stage('print') {
+            steps {
+                print ${IMAGE_TAG}
+            }
+    }
     stages{
         stage('Cleanup Workspace'){
             steps {
@@ -22,10 +31,17 @@ pipeline{
                 }
            }
        }
+       stage('Updating Kubernetes deployment file'){
+            steps {
+                sh "cat gitops_deployment.yml"
+                sh "sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g' deployment.yml"
+                sh "cat deployment.yml"
+            }
+        }
         stage('deploy to gke cluster') {
           steps {
              sh '''
-                sudo kubectl --kubeconfig ${WORKSPACE}/cd_config config set-context --current --user=cd-sa
+                sudo kubectl --kubeconfig ${WORKSPACE}/cd_config config set-context --current --user=gitops-sa
                 sudo kubectl apply -f gitops_deployment.yml --kubeconfig ${WORKSPACE}/cd_config 
                 '''
             }
