@@ -24,13 +24,6 @@ pipeline{
                 echo "After checking out"
             }
         }
-       stage('setup kubeconfig') {
-          steps {
-            withCredentials([file(credentialsId: 'gkecluster', variable: 'cd_config')]) {
-                sh "sudo cp \${cd_config} ${WORKSPACE}/cd_config"
-                }
-           }
-       }
        stage('Updating Kubernetes deployment file'){
             steps {
                 sh "cat gitops_deployment.yml"
@@ -38,18 +31,20 @@ pipeline{
                 sh "cat gitops_deployment.yml"
             }
         }
-        stage('deploy to gke cluster') {
-          steps {
-             sh '''
-                sudo kubectl --kubeconfig ${WORKSPACE}/cd_config config set-context --current --user=gitops-sa
-                sudo kubectl apply -f gitops_deployment.yml --kubeconfig ${WORKSPACE}/cd_config 
-                '''
+       stage('Pushing changes to git'){
+            steps{
+                script{
+                    sh """
+                    git config --global user.name 'venkat5290'
+                    git config --global user.email 'injarapu.venkat@gmail.com' 
+                    git add gitops_deployment.yml
+                    git commit -m 'Image updated for deployment' """
+                    withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'username', passwordVariable: 'password')]) {
+                        def encodedPassword = URLEncoder.encode("$PASSWORD",'UTF-8')
+                        sh "git push https://$username:$encodedPassword@github.com/venkat5290/spring_gitops.git main"
+                    }
+                }
             }
-        }
-        stage('remove kubeconfig file') {
-            steps {
-                sh "sudo rm -rf ${WORKSPACE}/cd_config"
-            }
-        }
+       }
     }
 }
