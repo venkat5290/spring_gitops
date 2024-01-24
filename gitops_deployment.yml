@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gitops-spring
-          image: venkat7010/springboot-devsecops:10
+          image: venkat7010/springboot-devsecops:11
           imagePullPolicy: Always
           ports:
             - containerPort: 8090
